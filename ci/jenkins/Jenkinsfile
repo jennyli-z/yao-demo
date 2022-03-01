@@ -1,29 +1,13 @@
-def podLabel = "kaniko-${UUID.randomUUID().toString()}"
-
 pipeline {
-    agent {
-        kubernetes {
-            label podLabel
-            defaultContainer 'jnlp'
-        }
-    }
-    stages{
-        stage('Build Docker Image'){
-            steps{
-                container(name: 'kaniko', shell: '/busybox/sh'){
-                    /* groovylint-disable-next-line NestedBlockDepth */
-                    withEnv(['PATH+EXTRA=/busybox']) {
-                        sh '''#!/busybox/sh -xe
-                        /kaniko/executor \
-                            --dockerfile docker/prod/Dockerfile \
-                            --context `pwd`/ \
-                            --verbosity debug \
-                            --insecure \
-                            --skip-tls-verify \
-                            --destination dockername/myapp:v0.1.0 \
-                            --destination dockername/myapp:latest
-                        '''
-                        }
+    agent any
+    stages {
+        stage('Build image') {
+            steps {
+                echo 'Starting to build docker image'
+
+                script {
+                    def customImage = docker.build("my-image:${env.BUILD_ID}")
+                    customImage.push()
                 }
             }
         }
